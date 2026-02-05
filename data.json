@@ -1,0 +1,172 @@
+{
+    "cpu": {
+        "usage": "5.0%",
+        "model": "AMD Ryzen 5 5600H with Radeon Graphics",
+        "cores": "12"
+    },
+    "memory": {
+        "total": "31953 MB",
+        "used": "24859 MB",
+        "percent": "77.8%"
+    },
+    "disk": {
+        "total": "57G",
+        "used": "53G",
+        "free": "1,7G",
+        "percent": "97%"
+    },
+    "mounts": [
+        {
+            "source": "efivarfs",
+            "size": "148K",
+            "used": "142K",
+            "avail": "1,3K",
+            "percent": "100%",
+            "target": "/sys/firmware/efi/efivars"
+        },
+        {
+            "source": "/dev/mapper/legion--kamil--vg-root",
+            "size": "57G",
+            "used": "53G",
+            "avail": "1,7G",
+            "percent": "97%",
+            "target": "/"
+        },
+        {
+            "source": "/dev/nvme0n1p2",
+            "size": "456M",
+            "used": "238M",
+            "avail": "193M",
+            "percent": "56%",
+            "target": "/boot"
+        },
+        {
+            "source": "/dev/mapper/legion--kamil--vg-home",
+            "size": "857G",
+            "used": "220G",
+            "avail": "594G",
+            "percent": "28%",
+            "target": "/home"
+        },
+        {
+            "source": "/dev/nvme0n1p1",
+            "size": "511M",
+            "used": "19M",
+            "avail": "493M",
+            "percent": "4%",
+            "target": "/boot/efi"
+        }
+    ],
+    "users": [
+        "kamil"
+    ],
+    "services": {
+        "docker": "active",
+        "libvirtd": "active",
+        "smbd": "active"
+    },
+    "docker_containers": [
+        {
+            "name": "nginx-dashboard",
+            "image": "nginx:latest",
+            "status": "Up About an hour"
+        },
+        {
+            "name": "taskcafe-web-1",
+            "image": "taskcafe/taskcafe:latest",
+            "status": "Exited (2) 2 weeks ago"
+        },
+        {
+            "name": "taskcafe-postgres-1",
+            "image": "postgres:12.3-alpine",
+            "status": "Up 9 days"
+        },
+        {
+            "name": "hungry_leavitt",
+            "image": "ssh-executor",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "festive_kare",
+            "image": "3cebaf11b885",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "elated_bell",
+            "image": "3cebaf11b885",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "infallible_agnesi",
+            "image": "3cebaf11b885",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "pensive_galileo",
+            "image": "3cebaf11b885",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "modest_jones",
+            "image": "3cebaf11b885",
+            "status": "Created"
+        },
+        {
+            "name": "cranky_vaughan",
+            "image": "1c8fb6b88e01",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "cranky_jennings",
+            "image": "1c8fb6b88e01",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "cool_grothendieck",
+            "image": "1c8fb6b88e01",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "sad_morse",
+            "image": "6a7f08a0eb04",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "nice_benz",
+            "image": "2dd392bf566f",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "trusting_mclean",
+            "image": "46749abb98a8",
+            "status": "Exited (2) 3 weeks ago"
+        },
+        {
+            "name": "infallible_mirzakhani",
+            "image": "5cd495eba305",
+            "status": "Exited (255) 3 weeks ago"
+        },
+        {
+            "name": "fizzy",
+            "image": "ghcr.io/basecamp/fizzy:main",
+            "status": "Exited (255) 7 weeks ago"
+        },
+        {
+            "name": "ecstatic_antonelli",
+            "image": "ghcr.io/phare/sloggo:latest",
+            "status": "Exited (2) 2 months ago"
+        },
+        {
+            "name": "lunalytics",
+            "image": "ksjaay/lunalytics:latest",
+            "status": "Exited (1) 2 weeks ago"
+        }
+    ],
+    "system": {
+        "hostname": "DC-L-2455",
+        "uptime": "up 1 week, 2 days, 1 hour, 19 minutes",
+        "kernel": "6.12.63+deb13-amd64",
+        "os": "Debian GNU/Linux 13 (trixie)",
+        "last_update": "2026-02-04 15:11:13"
+    }
+}

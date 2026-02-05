@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKDash - Linux System Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container pt-3 pb-5">
+        <header class="mb-5 d-flex justify-content-between align-items-end">
+            <div>
+                <h1 class="fw-900 display-5 mb-0">KK<span style="color: var(--accent-primary)">Dash</span> 🚀</h1>
+                <p class="text-secondary opacity-75 fs-5" id="os-name">Initializing core systems...</p>
+            </div>
+            <div class="text-end pb-2">
+                <div class="d-flex align-items-center justify-content-end mb-2">
+                    <span class="pulse"></span>
+                    <span class="fw-bold small" style="color: var(--accent-secondary); letter-spacing: 2px;">NEON
+                        LIVE</span>
+                </div>
+                <small class="text-secondary font-monospace" id="last-update">Updating...</small>
+            </div>
+        </header>
+
+        <div class="row g-4">
+            <!-- CPU Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card p-4 h-100">
+                    <div class="stat-label mb-2">⚡ Processor Power</div>
+                    <div class="stat-value mb-1" id="cpu-usage">--%</div>
+                    <div class="text-secondary small mb-3"><span id="cpu-cores">--</span> Cores Active 🧠</div>
+                    <div class="progress mb-3">
+                        <div id="cpu-progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div class="text-secondary small text-truncate fw-medium" id="cpu-model">Detecting...</div>
+                </div>
+            </div>
+
+            <!-- Memory Card -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card p-4 h-100">
+                    <div class="stat-label mb-2">💎 Memory</div>
+                    <div class="stat-value mb-1" id="mem-percent">--%</div>
+                    <div class="text-secondary small mb-3">Buffer status optimal</div>
+                    <div class="progress mb-3">
+                        <div id="mem-progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between text-secondary small fw-bold">
+                        <span id="mem-used">--</span>
+                        <span>/</span>
+                        <span id="mem-total">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services & Users -->
+            <div class="col-md-6 col-lg-4">
+                <div class="glass-card p-4 h-100">
+                    <div class="stat-label mb-3">🛠️ System Services</div>
+                    <div id="services-list" class="mb-4">
+                        <!-- Services injected here -->
+                    </div>
+
+                    <div class="stat-label mb-2">👤 Active Operators</div>
+                    <div id="users-list" class="d-flex flex-wrap gap-2">
+                        <!-- Users injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mounts Card -->
+            <div class="col-12">
+                <div class="glass-card p-4">
+                    <div class="stat-label mb-4" style="color: #fbbf24">📂 Data Archive Archives</div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0 w-100 text-white minimal-table"
+                            style="background: transparent; border: none;">
+                            <thead>
+                                <tr class="text-secondary small text-uppercase">
+                                    <th>Mount Target 📍</th>
+                                    <th>Volume 💾</th>
+                                    <th>Capacity 📊</th>
+                                    <th>Allocation 📏</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mounts-body">
+                                <!-- Mounts injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Docker Containers Card -->
+            <div class="col-12" id="docker-card-container">
+                <div class="glass-card p-4">
+                    <div class="stat-label mb-4">📦 Containers (Docker)</div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0 w-100 text-white minimal-table"
+                            style="background: transparent; border: none;">
+                            <thead>
+                                <tr class="text-secondary small text-uppercase">
+                                    <th>Entity Name 🏷️</th>
+                                    <th>Core Image 💿</th>
+                                    <th>Operational State 🚦</th>
+                                </tr>
+                            </thead>
+                            <tbody id="docker-body">
+                                <!-- Docker data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-5 pt-4 text-center border-top border-white border-opacity-5">
+            <p class="mb-0">✨ KKDash &bull; Linux System Dashboard ✨</p>
+            <small class="text-secondary" id="uptime-display">--</small>
+        </footer>
+    </div>
+
+    <script>
+        async function updateDashboard() {
+            try {
+                const response = await fetch('data.json');
+                const data = await response.json();
+
+                // CPU
+                document.getElementById('cpu-usage').innerText = data.cpu.usage;
+                document.getElementById('cpu-progress').style.width = data.cpu.usage;
+                document.getElementById('cpu-model').innerText = data.cpu.model;
+                document.getElementById('cpu-cores').innerText = data.cpu.cores;
+
+                // Memory
+                document.getElementById('mem-percent').innerText = data.memory.percent;
+                document.getElementById('mem-progress').style.width = data.memory.percent;
+                document.getElementById('mem-used').innerText = data.memory.used;
+                document.getElementById('mem-total').innerText = data.memory.total;
+
+                // Services
+                const servicesList = document.getElementById('services-list');
+                servicesList.innerHTML = '';
+                for (const [name, status] of Object.entries(data.services)) {
+                    const statusIcon = status === 'active' ? '🟢' : '🔴';
+                    const badgeClass = status === 'active' ? 'bg-success' : 'bg-danger';
+                    servicesList.innerHTML += `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-secondary small text-uppercase fw-bold">${name}</span>
+                            <span class="badge ${badgeClass} text-uppercase shadow-sm">${statusIcon} ${status}</span>
+                        </div>
+                    `;
+                }
+
+                // Users
+                const usersList = document.getElementById('users-list');
+                usersList.innerHTML = data.users.map(user =>
+                    `<span class="badge badge-outline-neon shadow-sm px-3 py-2">⚡ ${user}</span>`
+                ).join('') || '<span class="text-secondary italic small">No active operators</span>';
+
+                // Mounts
+                const mountsBody = document.getElementById('mounts-body');
+                mountsBody.innerHTML = data.mounts.map(m => {
+                    const percentUsed = parseInt(m.percent);
+                    let colorClass = 'bg-success';
+                    if (percentUsed >= 90) colorClass = 'bg-danger';
+                    else if (percentUsed >= 70) colorClass = 'bg-warning';
+
+                    return `
+                        <tr>
+                            <td class="fw-bold text-white">${m.target}</td>
+                            <td class="text-secondary small font-monospace">${m.source}</td>
+                            <td style="width: 30%">
+                                <div class="progress" style="height: 8px">
+                                    <div class="progress-bar ${colorClass}" role="progressbar" style="width: ${m.percent}"></div>
+                                </div>
+                            </td>
+                            <td class="text-secondary small fw-bold">${m.used} / ${m.size}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Docker Containers
+                const dockerCardContainer = document.getElementById('docker-card-container');
+
+                if (data.docker_containers === null) {
+                    dockerCardContainer.style.display = 'none';
+                } else {
+                    dockerCardContainer.style.display = 'block';
+                    const dockerBody = document.getElementById('docker-body');
+                    dockerBody.innerHTML = data.docker_containers.map(c => {
+                        const isUp = c.status.toLowerCase().includes('up');
+                        const statusColor = isUp ? '#4ade80' : '#ef4444'; // Neon Green for UP
+                        const statusEmoji = isUp ? '✔️' : '❌';
+                        return `
+                        <tr>
+                            <td class="fw-bold text-white">${c.name}</td>
+                            <td class="text-secondary small font-monospace">${c.image}</td>
+                            <td style="color: ${statusColor};" class="fw-bold small">${statusEmoji} ${c.status}</td>
+                        </tr>
+                    `;
+                    }).join('') || '<tr><td colspan="3" class="text-center text-secondary py-4 italic">No neural containers active</td></tr>';
+                }
+
+                // System
+                document.getElementById('os-name').innerText = '🌍 ' + data.system.os + ' 🖥️ ' + data.system.hostname + ' ⚡ ' + data.system.uptime;
+                document.getElementById('last-update').innerText = 'SECURE SYNC: ' + data.system.last_update;
+                document.getElementById('uptime-display').innerText = '⏱️ Uptime: ' + data.system.uptime;
+                document.getElementById('hostname-display').innerText = '@' + data.system.hostname;
+
+            } catch (error) {
+                console.error('CRITICAL SYNC ERROR:', error);
+            }
+        }
+
+        // Initial load
+        updateDashboard();
+        // Refresh every 5 seconds
+        setInterval(updateDashboard, 5000);
+    </script>
+</body>
+
+</html>
