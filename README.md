@@ -19,7 +19,7 @@ KKDash is a lightweight and fast dashboard for Linux systems, designed to displa
 
 To install KKDash as a system service, follow these steps (requires root/sudo privileges):
 
-1. **Run the installation script**:
+1. **Clone github repo and run the installation script**:
    ```bash
    sudo ./setup_service.sh install
    ```
