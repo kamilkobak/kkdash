@@ -20,7 +20,8 @@ install_app() {
     # 2. Copy files
     cp monitor.py /opt/kkdash/bin/
     cp index.html style.css /opt/kkdash/www/
-    cp docker-compose.yml .env /opt/kkdash
+    cp docker-compose.yml /opt/kkdash
+    cp .env /opt/kkdash
     echo "Copied files to /opt/kkdash/bin and /opt/kkdash/www"
 
     # 3. Configure monitor.py for the service
@@ -85,6 +86,8 @@ upgrade_app() {
     cp monitor.py /opt/kkdash/bin/
     cp index.html /opt/kkdash/www/
     cp style.css /opt/kkdash/www/
+    cp docker-compose.yml /opt/kkdash
+    cp .env /opt/kkdash
     
     # Cleanup old data.json location
     rm -f /opt/kkdash/data.json
