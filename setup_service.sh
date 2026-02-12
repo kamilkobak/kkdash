@@ -20,6 +20,7 @@ install_app() {
     # 2. Copy files
     cp monitor.py /opt/kkdash/bin/
     cp index.html style.css /opt/kkdash/www/
+    cp docker-compose.yml .env /opt/kkdash
     echo "Copied files to /opt/kkdash/bin and /opt/kkdash/www"
 
     # 3. Configure monitor.py for the service
@@ -63,6 +64,8 @@ EOF
     echo ""
     echo "========================================================"
     echo "To serve the dashboard via Web, run this minimal Docker Nginx:"
+    echo "cd  /opt/kkdash && docker compose up -d"
+    echo "OR"
     echo "sudo docker run -d --name kkdash-web --restart always -v /opt/kkdash/www:/usr/share/nginx/html:ro -p 8080:80 nginx:alpine"
     echo "Then access: http://localhost:8080"
     echo "========================================================"
