@@ -66,12 +66,16 @@ The `/opt/kkdash/www` directory contains static files and a `data.json` file gen
 The fastest way to run the interface using a lightweight Nginx image:
 
 ```bash
+# via docker
 sudo docker run -d \
   --name kkdash-web \
   --restart always \
   -v /opt/kkdash/www:/usr/share/nginx/html:ro \
   -p 8080:80 \
   nginx:alpine
+
+# or via docker compose
+cd  /opt/kkdash && docker compose up -d
 ```
 The dashboard will be available at: `http://localhost:8080`
 
