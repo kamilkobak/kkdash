@@ -134,6 +134,64 @@ def get_disk_info():
     except Exception:
         return {"total": "N/A", "used": "N/A", "free": "N/A", "percent": "0%"}
 
+def get_ufw_stats():
+    try:
+        # Check if UFW is installed and active
+        try:
+            status_output = subprocess.check_output("ufw status", shell=True).decode().strip()
+            is_active = "Status: active" in status_output
+        except Exception:
+            is_active = False
+
+        if not is_active:
+            return {"active": False, "top_blocked": [], "ports": {}}
+
+        # Get lines containing [UFW BLOCK] from dmesg
+        cmd = "dmesg | grep '\[UFW BLOCK\]' | tail -n 1000"
+        try:
+            output = subprocess.check_output(cmd, shell=True).decode().splitlines()
+        except subprocess.CalledProcessError:
+            # grep returns 1 if no matches found
+            output = []
+        
+        blocks = []
+        port_counts = {}
+        pair_counts = {}
+        
+        for line in output:
+            import re
+            src_match = re.search(r'SRC=([^\s]+)', line)
+            dpt_match = re.search(r'DPT=([^\s]+)', line)
+            
+            if src_match and dpt_match:
+                src = src_match.group(1)
+                dpt = dpt_match.group(1)
+                
+                # Count pairs for the table
+                pair = f"{src}|{dpt}"
+                pair_counts[pair] = pair_counts.get(pair, 0) + 1
+                
+                # Count ports for the chart
+                port_counts[dpt] = port_counts.get(dpt, 0) + 1
+        
+        # Sort and get top 10 pairs
+        top_pairs_raw = sorted(pair_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        top_blocked = []
+        for p_str, count in top_pairs_raw:
+            ip, port = p_str.split('|')
+            top_blocked.append({"ip": ip, "port": port, "count": count})
+        
+        # Sort and get top ports (for better visualization)
+        top_ports = dict(sorted(port_counts.items(), key=lambda x: x[1], reverse=True)[:10])
+        
+        return {
+            "active": True,
+            "top_blocked": top_blocked,
+            "ports": top_ports
+        }
+    except Exception as e:
+        return {"active": False, "top_blocked": [], "ports": {}}
+
 def get_system_info():
     try:
         return {
@@ -158,7 +216,8 @@ def main():
                 "users": get_logged_users(),
                 "services": get_service_status(),
                 "docker_containers": get_docker_containers(),
-                "system": get_system_info()
+                "system": get_system_info(),
+                "ufw": get_ufw_stats()
             }
             
             # Save with absolute path to ensure service writes to correct location

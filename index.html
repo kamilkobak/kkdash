@@ -10,6 +10,8 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -119,17 +121,52 @@
                     </div>
                 </div>
             </div>
+
+            <!-- UFW Firewall Stats Card -->
+            <div class="col-12" id="ufw-card-container">
+                <div class="glass-card p-4">
+                    <div class="stat-label mb-4" style="color: #60a5fa">🔥 Firewall Intelligence (UFW)</div>
+                    <div class="row align-items-center">
+                        <div class="col-lg-7">
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0 w-100 text-white minimal-table"
+                                    style="background: transparent; border: none;">
+                                    <thead>
+                                        <tr class="text-secondary small text-uppercase">
+                                            <th>Source IP 🌐</th>
+                                            <th>Target Port 🚪</th>
+                                            <th>Attempts 📊</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ufw-body">
+                                        <!-- UFW data injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-lg-5 text-center mt-4 mt-lg-0">
+                            <div style="height:250px; width:100%; display: flex; justify-content: center;">
+                                <canvas id="ufwChart"></canvas>
+                            </div>
+                            <div class="text-secondary small mt-2 fw-bold">Top 10 Target Port Distribution 🎯</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <footer class="mt-5 pt-4 text-center border-top border-white border-opacity-5">
             <p class="mb-0">✨ <a href="https://github.com/kamilkobak/kkdash" target="_blank"
-                    class="text-decoration-none text-inherit alternate-link">KKDash &bull; Linux System Dashboard</a> ✨
+                    class="text-decoration-none text-inherit alternate-link">KKDash &bull; Linux System
+                    Dashboard</a> ✨
             </p>
             <small class="text-secondary" id="uptime-display">--</small>
         </footer>
     </div>
 
     <script>
+        let ufwChart = null;
+
         async function updateDashboard() {
             try {
                 const response = await fetch('data.json');
@@ -211,11 +248,77 @@
                     }).join('') || '<tr><td colspan="3" class="text-center text-secondary py-4 italic">No neural containers active</td></tr>';
                 }
 
+                // UFW Stats Logic
+                const ufwCardContainer = document.getElementById('ufw-card-container');
+                if (data.ufw && data.ufw.active) {
+                    ufwCardContainer.style.display = 'block';
+
+                    // UFW Table
+                    const ufwBody = document.getElementById('ufw-body');
+                    ufwBody.innerHTML = data.ufw.top_blocked.map(b => `
+                        <tr>
+                            <td class="fw-bold text-white">
+                                ${b.ip} 
+                                <a href="https://apps.db.ripe.net/db-web-ui/query?from=www&searchtext=${b.ip}" 
+                                   target="_blank" 
+                                   class="ms-1 text-decoration-none" 
+                                   title="Lookup on RIPE">🔍</a>
+                            </td>
+                            <td class="text-secondary small font-monospace">${b.port}</td>
+                            <td class="text-secondary small fw-bold"><span class="badge bg-danger bg-opacity-25 text-danger" style="border: 1px solid rgba(239, 68, 68, 0.2)">${b.count} blocks</span></td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="3" class="text-center text-secondary py-4 italic">No recent firewall blocks</td></tr>';
+
+                    // UFW Chart
+                    const ctx = document.getElementById('ufwChart').getContext('2d');
+                    const portLabels = Object.keys(data.ufw.ports);
+                    const chartData = {
+                        labels: portLabels,
+                        datasets: [{
+                            data: Object.values(data.ufw.ports),
+                            backgroundColor: [
+                                '#f0abfc', '#22d3ee', '#818cf8', '#fbbf24', '#f472b6',
+                                '#4ade80', '#fb7185', '#38bdf8', '#c084fc', '#94a3b8'
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 15
+                        }]
+                    };
+
+                    if (ufwChart) {
+                        ufwChart.data = chartData;
+                        ufwChart.update('none'); // Update without animation
+                    } else if (portLabels.length > 0) {
+                        ufwChart = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: chartData,
+                            options: {
+                                animation: false, // Disable initial animation
+                                cutout: '70%',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            color: '#94a3b8',
+                                            usePointStyle: true,
+                                            padding: 20,
+                                            font: { family: 'Inter', size: 11 }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    ufwCardContainer.style.display = 'none';
+                }
+
                 // System
                 document.getElementById('os-name').innerText = '🌍 ' + data.system.os + ' 🖥️ ' + data.system.hostname + ' ⚡ ' + data.system.uptime;
                 document.getElementById('last-update').innerText = 'SECURE SYNC: ' + data.system.last_update;
                 document.getElementById('uptime-display').innerText = '⏱️ Uptime: ' + data.system.uptime;
-                document.getElementById('hostname-display').innerText = '@' + data.system.hostname;
 
             } catch (error) {
                 console.error('CRITICAL SYNC ERROR:', error);
