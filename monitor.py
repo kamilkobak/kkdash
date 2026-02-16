@@ -13,15 +13,42 @@ CHECK_SERVICES = ["docker", "libvirtd", "smbd"]  # Services to monitor
 DATA_FILE_PATH = "/opt/kkdash/www/data.json"  # Absolute path to save the data.json file
 # ---------------------
 
+# Global state for CPU calculation
+prev_cpu_times = None
+
 def get_cpu_info():
+    global prev_cpu_times
     try:
-        # Get CPU usage using a different method
-        cmd = "grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'"
-        usage_val = subprocess.check_output(cmd, shell=True).decode().strip()
-        usage = f"{float(usage_val):.1f}%" if usage_val else "0.0%"
+        # Read /proc/stat
+        with open('/proc/stat', 'r') as f:
+            line = f.readline()
+        
+        if not line.startswith('cpu '):
+            return {"usage": "N/A", "model": "Error reading /proc/stat", "cores": "N/A"}
+        
+        # Parse CPU times: user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice
+        parts = [float(x) for x in line.split()[1:]]
+        idle_time = parts[3] + parts[4]  # idle + iowait
+        non_idle_time = parts[0] + parts[1] + parts[2] + parts[5] + parts[6] + parts[7]
+        total_time = idle_time + non_idle_time
+        
+        usage = "0.0%"
+        if prev_cpu_times is not None:
+            prev_total, prev_idle = prev_cpu_times
+            total_delta = total_time - prev_total
+            idle_delta = idle_time - prev_idle
+            
+            if total_delta > 0:
+                usage_pct = (total_delta - idle_delta) / total_delta * 100
+                usage = f"{max(0, min(100, usage_pct)):.1f}%"
+        
+        prev_cpu_times = (total_time, idle_time)
         
         # Get CPU model and core count
-        model = subprocess.check_output("grep -m 1 'model name' /proc/cpuinfo | cut -d: -f2", shell=True).decode().strip()
+        model = subprocess.check_output("grep -m 1 'model name' /proc/cpuinfo | cut -d: -f1,2 --complement", shell=True).decode().strip()
+        if not model: # Some ARM systems use 'Processor' instead of 'model name'
+             model = subprocess.check_output("grep -m 1 'Processor' /proc/cpuinfo | cut -d: -f2", shell=True).decode().strip()
+             
         cores = subprocess.check_output("nproc", shell=True).decode().strip()
         
         return {
