@@ -219,6 +219,83 @@ def get_ufw_stats():
     except Exception as e:
         return {"active": False, "top_blocked": [], "ports": {}}
 
+def get_fail2ban_stats():
+    try:
+        # Check if fail2ban is active
+        try:
+            status = subprocess.check_output("systemctl is-active fail2ban", shell=True).decode().strip()
+            if status != "active":
+                return {"active": False}
+        except Exception:
+            return {"active": False}
+
+        # Get list of jails
+        try:
+            client_status = subprocess.check_output("fail2ban-client status", shell=True).decode()
+            import re
+            jails_match = re.search(r"Jail list:\s+(.*)", client_status)
+            if not jails_match:
+                return {"active": True, "monthly_top": [], "current_top": [], "jails_dist": {}}
+            jails = [j.strip() for j in jails_match.group(1).split(',')]
+        except Exception:
+            return {"active": True, "monthly_top": [], "current_top": [], "jails_dist": {}}
+
+        # Get currently banned IPs
+        current_banned = []
+        jails_dist = {}
+        for jail in jails:
+            try:
+                jail_status = subprocess.check_output(f"fail2ban-client status {jail}", shell=True).decode()
+                ips_match = re.search(r"Banned IP list:\s+(.*)", jail_status)
+                if ips_match:
+                    ips = ips_match.group(1).split()
+                    for ip in ips:
+                        current_banned.append({"ip": ip, "jail": jail})
+                    jails_dist[jail] = len(ips)
+                else:
+                    jails_dist[jail] = 0
+            except Exception:
+                continue
+
+        # Get monthly stats from log
+        monthly_stats = {}
+        try:
+            current_month = datetime.now().strftime("%Y-%m")
+            # Log format usually: 2026-02-16 12:00:00,000 fail2ban.actions [123]: NOTICE [jail] Ban IP
+            # We look for "Ban" lines in the current month
+            cmd = f"grep 'Ban ' /var/log/fail2ban.log | grep '^{current_month}'"
+            try:
+                log_output = subprocess.check_output(cmd, shell=True).decode().splitlines()
+                for line in log_output:
+                    # Parse jail and IP
+                    # Example: 2026-02-16 12:12:12,123 fail2ban.actions [123]: NOTICE [sshd] Ban 1.2.3.4
+                    match = re.search(r"NOTICE\s+\[(.*?)\]\s+Ban\s+(.*)", line)
+                    if match:
+                        jail = match.group(1)
+                        ip = match.group(2)
+                        key = f"{ip}|{jail}"
+                        monthly_stats[key] = monthly_stats.get(key, 0) + 1
+            except subprocess.CalledProcessError:
+                pass
+        except Exception:
+            pass
+
+        # Sort and get top 10 monthly
+        top_monthly_raw = sorted(monthly_stats.items(), key=lambda x: x[1], reverse=True)[:10]
+        top_monthly = []
+        for key, count in top_monthly_raw:
+            ip, jail = key.split('|')
+            top_monthly.append({"ip": ip, "jail": jail, "count": count})
+
+        return {
+            "active": True,
+            "monthly_top": top_monthly,
+            "current_top": current_banned[:10],
+            "jails_dist": jails_dist
+        }
+    except Exception:
+        return {"active": False}
+
 def get_system_info():
     try:
         return {
@@ -244,7 +321,8 @@ def main():
                 "services": get_service_status(),
                 "docker_containers": get_docker_containers(),
                 "system": get_system_info(),
-                "ufw": get_ufw_stats()
+                "ufw": get_ufw_stats(),
+                "fail2ban": get_fail2ban_stats()
             }
             
             # Save with absolute path to ensure service writes to correct location

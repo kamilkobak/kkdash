@@ -11,8 +11,9 @@ KKDash is a lightweight and fast dashboard for Linux systems, designed to displa
 - 🛠️ **System Services**: Status overview of key system services.
 - 📂 **Data Archives**: Information about mounted file systems and available space.
 - 📦 **Docker Containers**: List of running containers and their status. *(Hidden if Docker is not installed on the system)*
-- � **Firewall Intelligence (UFW)**: Statistics on blocked traffic, including top attacking IPs and target port distribution. Includes quick RIPE database lookup links (🔍). *(Auto-hidden if UFW is inactive)*
-- �👤 **Active Operators**: Overview of users currently logged into the system.
+- 🔥 **Firewall Intelligence (UFW)**: Statistics on blocked traffic, including top attacking IPs and target port distribution. Includes quick RIPE database lookup links (🔍). *(Auto-hidden if UFW is inactive)*
+- 🛡️ **Intrusion Prevention (Fail2Ban)**: Detailed statistics on banned IPs (monthly and current) and jail distribution chart. Includes RIPE lookup links. *(Auto-hidden if Fail2Ban is inactive)*
+- 👤 **Active Operators**: Overview of users currently logged into the system.
 - ⏱️ **System Uptime**: Information on how long the system has been running.
 
 

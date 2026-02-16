@@ -153,6 +153,61 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Fail2Ban Stats Card -->
+            <div class="col-12" id="f2b-card-container">
+                <div class="glass-card p-4">
+                    <div class="stat-label mb-4" style="color: #f87171">🛡️ Intrusion Prevention (Fail2Ban)</div>
+                    <div class="row">
+                        <!-- Monthly Top -->
+                        <div class="col-lg-4 border-end border-white border-opacity-10">
+                            <div class="text-secondary small mb-3 fw-bold border-start border-danger ps-2">Top 10
+                                Monthly Blocks 📅</div>
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0 w-100 text-white minimal-table"
+                                    style="font-size: 0.85rem;">
+                                    <thead>
+                                        <tr class="text-secondary small text-uppercase">
+                                            <th>IP Address</th>
+                                            <th>Jail</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="f2b-monthly-body">
+                                        <!-- Data injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Currently Banned -->
+                        <div class="col-lg-4">
+                            <div class="text-secondary small mb-3 fw-bold border-start border-warning ps-2">Active
+                                Banned Entities 🚦</div>
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0 w-100 text-white minimal-table"
+                                    style="font-size: 0.85rem;">
+                                    <thead>
+                                        <tr class="text-secondary small text-uppercase">
+                                            <th>IP Address</th>
+                                            <th>Active Jail</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="f2b-current-body">
+                                        <!-- Data injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Jail Distribution Chart -->
+                        <div class="col-lg-4 text-center mt-4 mt-lg-0">
+                            <div style="height:250px; width:100%; display: flex; justify-content: center;">
+                                <canvas id="f2bChart"></canvas>
+                            </div>
+                            <div class="text-secondary small mt-2 fw-bold">Jail Distribution 🎯</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <footer class="mt-5 pt-4 text-center border-top border-white border-opacity-5">
@@ -166,6 +221,31 @@
 
     <script>
         let ufwChart = null;
+        let f2bChart = null;
+
+        function isPrivateIP(ip) {
+            const parts = ip.split('.');
+            if (parts.length !== 4) return false;
+            const first = parseInt(parts[0]);
+            const second = parseInt(parts[1]);
+
+            // 10.0.0.0/8
+            if (first === 10) return true;
+            // 172.16.0.0/12
+            if (first === 172 && second >= 16 && second <= 31) return true;
+            // 192.168.0.0/16
+            if (first === 192 && second === 168) return true;
+            // 127.0.0.0/8
+            if (first === 127) return true;
+
+            return false;
+        }
+
+        function getRipeLink(ip) {
+            if (isPrivateIP(ip)) return '';
+            return `<a href="https://apps.db.ripe.net/db-web-ui/query?from=www&searchtext=${ip}" 
+                       target="_blank" class="ms-1 text-decoration-none" title="Lookup on RIPE">🔍</a>`;
+        }
 
         async function updateDashboard() {
             try {
@@ -259,10 +339,7 @@
                         <tr>
                             <td class="fw-bold text-white">
                                 ${b.ip} 
-                                <a href="https://apps.db.ripe.net/db-web-ui/query?from=www&searchtext=${b.ip}" 
-                                   target="_blank" 
-                                   class="ms-1 text-decoration-none" 
-                                   title="Lookup on RIPE">🔍</a>
+                                ${getRipeLink(b.ip)}
                             </td>
                             <td class="text-secondary small font-monospace">${b.port}</td>
                             <td class="text-secondary small fw-bold"><span class="badge bg-danger bg-opacity-25 text-danger" style="border: 1px solid rgba(239, 68, 68, 0.2)">${b.count} blocks</span></td>
@@ -313,6 +390,82 @@
                     }
                 } else {
                     ufwCardContainer.style.display = 'none';
+                }
+
+                // Fail2Ban Stats Logic
+                const f2bCardContainer = document.getElementById('f2b-card-container');
+                if (data.fail2ban && data.fail2ban.active) {
+                    f2bCardContainer.style.display = 'block';
+
+                    // Monthly Table
+                    const f2bMonthlyBody = document.getElementById('f2b-monthly-body');
+                    f2bMonthlyBody.innerHTML = data.fail2ban.monthly_top.map(b => `
+                        <tr>
+                            <td class="fw-bold text-white">
+                                ${b.ip}
+                                ${getRipeLink(b.ip)}
+                            </td>
+                            <td><span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-25">${b.jail}</span></td>
+                            <td class="text-danger fw-bold">${b.count}</td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="3" class="text-center text-secondary py-4 italic">No monthly bans recorded</td></tr>';
+
+                    // Current Table
+                    const f2bCurrentBody = document.getElementById('f2b-current-body');
+                    f2bCurrentBody.innerHTML = data.fail2ban.current_top.map(b => `
+                        <tr>
+                            <td class="fw-bold text-white">
+                                ${b.ip}
+                                ${getRipeLink(b.ip)}
+                            </td>
+                            <td><span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25">${b.jail}</span></td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="2" class="text-center text-secondary py-4 italic">No active bans</td></tr>';
+
+                    // Fail2Ban Chart
+                    const ctxF2B = document.getElementById('f2bChart').getContext('2d');
+                    const jailLabels = Object.keys(data.fail2ban.jails_dist);
+                    const f2bChartData = {
+                        labels: jailLabels,
+                        datasets: [{
+                            data: Object.values(data.fail2ban.jails_dist),
+                            backgroundColor: [
+                                '#f87171', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa',
+                                '#f472b6', '#fb7185', '#38bdf8', '#c084fc', '#94a3b8'
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 15
+                        }]
+                    };
+
+                    if (f2bChart) {
+                        f2bChart.data = f2bChartData;
+                        f2bChart.update('none');
+                    } else if (jailLabels.length > 0) {
+                        f2bChart = new Chart(ctxF2B, {
+                            type: 'doughnut',
+                            data: f2bChartData,
+                            options: {
+                                animation: false,
+                                cutout: '70%',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            color: '#94a3b8',
+                                            usePointStyle: true,
+                                            padding: 20,
+                                            font: { family: 'Inter', size: 10 }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    f2bCardContainer.style.display = 'none';
                 }
 
                 // System
