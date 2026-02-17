@@ -262,21 +262,27 @@ def get_fail2ban_stats():
         try:
             current_month = datetime.now().strftime("%Y-%m")
             # Log format usually: 2026-02-16 12:00:00,000 fail2ban.actions [123]: NOTICE [jail] Ban IP
-            # We look for "Ban" lines in the current month
-            cmd = f"grep 'Ban ' /var/log/fail2ban.log | grep '^{current_month}'"
-            try:
-                log_output = subprocess.check_output(cmd, shell=True).decode().splitlines()
-                for line in log_output:
-                    # Parse jail and IP
-                    # Example: 2026-02-16 12:12:12,123 fail2ban.actions [123]: NOTICE [sshd] Ban 1.2.3.4
-                    match = re.search(r"NOTICE\s+\[(.*?)\]\s+Ban\s+(.*)", line)
-                    if match:
-                        jail = match.group(1)
-                        ip = match.group(2)
-                        key = f"{ip}|{jail}"
-                        monthly_stats[key] = monthly_stats.get(key, 0) + 1
-            except subprocess.CalledProcessError:
-                pass
+            # We look for "Ban" lines in the current month in both current and rotated log
+            log_files = ["/var/log/fail2ban.log", "/var/log/fail2ban.log.1"]
+            existing_logs = [f for f in log_files if os.path.exists(f)]
+            
+            if existing_logs:
+                # Combine logs for grep
+                logs_str = " ".join(existing_logs)
+                cmd = f"grep 'Ban ' {logs_str} | grep '^{current_month}'"
+                try:
+                    log_output = subprocess.check_output(cmd, shell=True).decode().splitlines()
+                    for line in log_output:
+                        # Parse jail and IP
+                        # Example: 2026-02-16 12:12:12,123 fail2ban.actions [123]: NOTICE [sshd] Ban 1.2.3.4
+                        match = re.search(r"NOTICE\s+\[(.*?)\]\s+Ban\s+(.*)", line)
+                        if match:
+                            jail = match.group(1)
+                            ip = match.group(2)
+                            key = f"{ip}|{jail}"
+                            monthly_stats[key] = monthly_stats.get(key, 0) + 1
+                except subprocess.CalledProcessError:
+                    pass
         except Exception:
             pass
 
