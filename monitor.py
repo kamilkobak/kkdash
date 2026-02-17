@@ -240,25 +240,9 @@ def get_fail2ban_stats():
         except Exception:
             return {"active": True, "monthly_top": [], "current_top": [], "jails_dist": {}}
 
-        # Get currently banned IPs
-        current_banned = []
-        jails_dist = {}
-        for jail in jails:
-            try:
-                jail_status = subprocess.check_output(f"fail2ban-client status {jail}", shell=True).decode()
-                ips_match = re.search(r"Banned IP list:\s+(.*)", jail_status)
-                if ips_match:
-                    ips = ips_match.group(1).split()
-                    for ip in ips:
-                        current_banned.append({"ip": ip, "jail": jail})
-                    jails_dist[jail] = len(ips)
-                else:
-                    jails_dist[jail] = 0
-            except Exception:
-                continue
-
         # Get monthly stats from log
         monthly_stats = {}
+        jails_dist = {j: 0 for j in jails}
         try:
             current_month = datetime.now().strftime("%Y-%m")
             # Log format usually: 2026-02-16 12:00:00,000 fail2ban.actions [123]: NOTICE [jail] Ban IP
@@ -281,10 +265,26 @@ def get_fail2ban_stats():
                             ip = match.group(2)
                             key = f"{ip}|{jail}"
                             monthly_stats[key] = monthly_stats.get(key, 0) + 1
+                            
+                            # Aggregated distribution for the chart
+                            jails_dist[jail] = jails_dist.get(jail, 0) + 1
                 except subprocess.CalledProcessError:
                     pass
         except Exception:
             pass
+
+        # Get currently banned IPs for the "Active" table
+        current_banned = []
+        for jail in jails:
+            try:
+                jail_status = subprocess.check_output(f"fail2ban-client status {jail}", shell=True).decode()
+                ips_match = re.search(r"Banned IP list:\s+(.*)", jail_status)
+                if ips_match:
+                    ips = ips_match.group(1).split()
+                    for ip in ips:
+                        current_banned.append({"ip": ip, "jail": jail})
+            except Exception:
+                continue
 
         # Sort and get top 10 monthly
         top_monthly_raw = sorted(monthly_stats.items(), key=lambda x: x[1], reverse=True)[:10]
