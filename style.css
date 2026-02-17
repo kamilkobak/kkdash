@@ -141,7 +141,7 @@ body {
 
 table {
     border-collapse: separate;
-    border-spacing: 0 8px;
+    border-spacing: 0 2px;
 }
 
 .glass-table {
@@ -171,7 +171,7 @@ table {
 }
 
 table td {
-    padding: 1rem !important;
+    padding: 0.5rem 0.8rem !important;
 }
 
 footer {
