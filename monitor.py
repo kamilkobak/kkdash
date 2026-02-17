@@ -269,7 +269,7 @@ def get_fail2ban_stats():
             if existing_logs:
                 # Combine logs for grep
                 logs_str = " ".join(existing_logs)
-                cmd = f"grep 'Ban ' {logs_str} | grep '^{current_month}'"
+                cmd = f"grep -h 'Ban ' {logs_str} | grep '^{current_month}'"
                 try:
                     log_output = subprocess.check_output(cmd, shell=True).decode().splitlines()
                     for line in log_output:
